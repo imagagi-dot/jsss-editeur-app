@@ -1,0 +1,50 @@
+{
+  "header_citation": "Harouna Amadou ML. et al. J Sah Sci Santé (2026), vol 06 (1): [pages]",
+  "title_fr": "Pneumonie grave chez les enfants de 1-59 mois admis dans le service de pédiatrie du CHR de Maradi",
+  "title_en": "Severe pneumonia in children aged 1-59 months admitted to the pediatric department of Maradi",
+  "authors": "Harouna Amadou ML^1,2^*, Hamadou M^3^, Ibrahim Mamadou AK^4^, Amadou O^1,2^, Mahamadou S^1^",
+  "date_recu": "Reçu le 12-11-2025",
+  "date_accepte": "Accepté le 18-12-2025",
+  "date_publie": "Publié le 30-01-2026",
+  "keywords": "pneumonie grave, enfant, CHR Maradi, mortalité, Niger",
+  "resume": [
+    {"h": "Introduction", "t": "La pneumonie grave est une cause majeure de mortalité infantile en Afrique subsaharienne. L'objectif était d'en décrire les aspects épidémiologiques, cliniques et thérapeutiques."},
+    {"h": "Matériels et méthodes", "t": "Étude longitudinale, prospective et descriptive sur 170 enfants de 1 à 59 mois hospitalisés pour pneumonie grave."},
+    {"h": "Résultats", "t": "L'âge moyen était de 12,71 mois. La détresse respiratoire était sévère chez 12% des cas. Le taux de mortalité hospitalière était de 10%."},
+    {"h": "Conclusion", "t": "Un diagnostic précoce et une prise en charge adaptée améliorent le pronostic de la pneumonie grave de l'enfant."}
+  ],
+  "keywords_en": "severe pneumonia, child, mortality, Niger",
+  "abstract": [
+    {"h": "Introduction", "t": "Severe pneumonia is a major cause of infant mortality in sub-Saharan Africa. The objective was to describe its epidemiological, clinical and therapeutic features."},
+    {"h": "Materials and methods", "t": "A longitudinal, prospective and descriptive study of 170 children aged 1 to 59 months hospitalized for severe pneumonia."},
+    {"h": "Results", "t": "Mean age was 12.71 months. Respiratory distress was severe in 12% of cases. In-hospital mortality was 10%."},
+    {"h": "Conclusion", "t": "Early diagnosis and appropriate management improve the prognosis of severe pneumonia in children."}
+  ],
+  "affiliations": ["1- Faculté des sciences de la santé, Université de Maradi, Niger", "2- Service de pédiatrie, CHR de Maradi, Niger", "3- Service de pédiatrie, HNZ, Niger", "4- Faculté des sciences de la santé, UAM, Niger"],
+  "corresponding": "Dr Harouna Amadou ML, CHR de Maradi, Niger ; email : harouna@example.com",
+  "body": [
+    {"type": "h2", "text": "Introduction"},
+    {"type": "p", "text": "La pneumonie est une infection du parenchyme pulmonaire causée par un virus ou une bactérie. Elle demeure une cause majeure de morbidité et de mortalité chez l'enfant de moins de cinq ans [1,2]. Selon l'UNICEF, elle représente une part importante des décès infantiles dans les pays à ressources limitées [3]."},
+    {"type": "p", "text": "Dans notre contexte, peu d'études se sont intéressées aux formes graves. C'est dans ce cadre que nous avons mené ce travail dont l'objectif était de décrire les aspects épidémiologiques, cliniques et thérapeutiques de la pneumonie grave chez l'enfant."},
+    {"type": "h2", "text": "Matériels et méthodes"},
+    {"type": "h3", "text": "Type, période et cadre de l'étude"},
+    {"type": "p", "text": "Il s'agissait d'une étude longitudinale, prospective, descriptive et analytique menée dans le service de pédiatrie du CHR de Maradi sur une période de 12 mois."},
+    {"type": "h3", "text": "Population de l'étude"},
+    {"type": "p", "text": "Tous les enfants de 1 à 59 mois hospitalisés pour pneumonie grave répondant aux critères de l'OMS ont été inclus."},
+    {"type": "h2", "text": "Résultats"},
+    {"type": "p", "text": "Sur 622 enfants hospitalisés durant la période, 170 répondaient aux critères d'inclusion, soit une fréquence de 27,3%. L'âge moyen était de 12,71 mois avec des extrêmes de 1 et 59 mois."},
+    {"type": "caption", "text": "Tableau I : Caractéristiques épidémiologiques et sociodémographiques"},
+    {"type": "p", "text": "La détresse respiratoire était modérée chez 55,90% des cas et sévère chez 12% des cas. Le paludisme était la comorbidité la plus fréquente (43,53%)."},
+    {"type": "h2", "text": "Discussion"},
+    {"type": "p", "text": "Nos résultats concordent avec les données de la littérature qui rapportent une prédominance chez le nourrisson [3,4]. La saisonnalité observée s'explique par les variations climatiques régionales."},
+    {"type": "h2", "text": "Conclusion"},
+    {"type": "p", "text": "La pneumonie grave reste fréquente et grevée d'une mortalité non négligeable. Un diagnostic précoce et une prise en charge adaptée sont essentiels pour améliorer le pronostic."}
+  ],
+  "conflict": "Les auteurs ne déclarent aucun conflit d'intérêts.",
+  "references": [
+    "Léophonte P. Pneumonie. Paris: John Libbey Eurotext; 2004. 210 p.",
+    "Organisation Mondiale de la Santé. Pneumonie de l'enfant. Genève: OMS; 2022.",
+    "UNICEF. Pneumonie [Internet]. New York: UNICEF; 2023. Disponible sur: https://unicef.org",
+    "Lahlimi FE, Bouskraoui M. Pneumonies de l'enfant. Rev Mar Mal Enf. 2019;52(3):40-6."
+  ]
+}
