@@ -143,8 +143,8 @@ def compute_health_score(spec_json):
         
     return checks
 
-st.set_page_config(page_title="JSSS Auto-Éditeur (V4)", page_icon="📝", layout="wide")
-st.title("📝 Éditeur Automatisé - Journal JSSS")
+st.set_page_config(page_title="JSSS Auto-Éditeur (V4)", page_icon="🔬", layout="wide")
+st.title("🔬 Éditeur Automatisé - Journal JSSS")
 st.markdown("Version 4 - Assistants avancés (Traduction, Vancouver, Anonymisation, Pre-flight)")
 
 if 'processed_files' not in st.session_state:
