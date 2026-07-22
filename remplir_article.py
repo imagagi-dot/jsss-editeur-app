@@ -302,6 +302,19 @@ def set_running_header(doc, citation):
 
 def set_page_numbers(doc):
     for sec in doc.sections:
+        # Forcer la numérotation continue et en chiffres arabes
+        sectPr = sec._sectPr
+        pgNumType = sectPr.find(qn('w:pgNumType'))
+        if pgNumType is not None:
+            start_attr = qn('w:start')
+            if start_attr in pgNumType.attrib:
+                del pgNumType.attrib[start_attr]
+            pgNumType.set(qn('w:fmt'), 'decimal')
+        else:
+            pgNumType = OxmlElement('w:pgNumType')
+            pgNumType.set(qn('w:fmt'), 'decimal')
+            sectPr.append(pgNumType)
+
         # On traite le footer classique
         for ftr in (sec.first_page_footer, sec.footer, sec.even_page_footer):
             if ftr is None:
@@ -310,6 +323,15 @@ def set_page_numbers(doc):
                 ftr.is_linked_to_previous = False
             except Exception:
                 pass
+            
+            # Nettoyer complètement les anciens tableaux du pied de page
+            for tbl in ftr.tables:
+                tbl._element.getparent().remove(tbl._element)
+                
+            # Nettoyer complètement les paragraphes en trop
+            for p in ftr.paragraphs[1:]:
+                p._element.getparent().remove(p._element)
+
             if not ftr.paragraphs:
                 p = ftr.add_paragraph()
             else:
