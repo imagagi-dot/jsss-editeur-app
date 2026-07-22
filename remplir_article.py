@@ -324,19 +324,12 @@ def set_page_numbers(doc):
             except Exception:
                 pass
             
-            # Nettoyer complètement les anciens tableaux du pied de page
-            for tbl in ftr.tables:
-                tbl._element.getparent().remove(tbl._element)
-                
-            # Nettoyer complètement les paragraphes en trop
-            for p in ftr.paragraphs[1:]:
-                p._element.getparent().remove(p._element)
+            # Nettoyer complètement TOUS les éléments du pied de page (y compris les balises cachées w:sdt)
+            for child in list(ftr._element):
+                ftr._element.remove(child)
 
-            if not ftr.paragraphs:
-                p = ftr.add_paragraph()
-            else:
-                p = ftr.paragraphs[0]
-                p.clear()
+            # Créer un paragraphe vierge
+            p = ftr.add_paragraph()
             
             # Alignement à droite
             from docx.enum.text import WD_ALIGN_PARAGRAPH
