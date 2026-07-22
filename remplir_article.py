@@ -300,6 +300,42 @@ def set_running_header(doc, citation):
                     run_tab = p.add_run()
                     run_tab.add_tab()
 
+def set_page_numbers(doc):
+    for sec in doc.sections:
+        # On traite le footer classique
+        for ftr in (sec.first_page_footer, sec.footer, sec.even_page_footer):
+            if ftr is None:
+                continue
+            try:
+                ftr.is_linked_to_previous = False
+            except Exception:
+                pass
+            if not ftr.paragraphs:
+                p = ftr.add_paragraph()
+            else:
+                p = ftr.paragraphs[0]
+                p.clear()
+            
+            # Alignement à droite
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            
+            run = p.add_run()
+            
+            # Champs XML pour générer le numéro de page en chiffres arabes
+            fldChar1 = OxmlElement('w:fldChar')
+            fldChar1.set(qn('w:fldCharType'), 'begin')
+            run._r.append(fldChar1)
+
+            instrText = OxmlElement('w:instrText')
+            instrText.set(qn('xml:space'), 'preserve')
+            instrText.text = 'PAGE \\* Arabic'
+            run._r.append(instrText)
+
+            fldChar2 = OxmlElement('w:fldChar')
+            fldChar2.set(qn('w:fldCharType'), 'end')
+            run._r.append(fldChar2)
+
 
 def fill_affiliation_box(box_p, aff_lines, corr):
     txbx = box_p.find(".//" + qn("w:txbxContent"))
@@ -463,6 +499,7 @@ def fill(spec, template, out_path):
             body.append(el)
 
     set_running_header(doc, spec.get("header_citation"))
+    set_page_numbers(doc)
     doc.save(out_path)
     print("OK -> " + out_path)
 
