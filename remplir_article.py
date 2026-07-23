@@ -300,8 +300,8 @@ def set_running_header(doc, citation):
                     run_tab = p.add_run()
                     run_tab.add_tab()
 
-def set_page_numbers(doc):
-    for sec in doc.sections:
+def set_page_numbers(doc, start_page=1):
+    for i, sec in enumerate(doc.sections):
         # Forcer la numérotation continue et en chiffres arabes
         sectPr = sec._sectPr
         pgNumType = sectPr.find(qn('w:pgNumType'))
@@ -314,6 +314,10 @@ def set_page_numbers(doc):
             pgNumType = OxmlElement('w:pgNumType')
             pgNumType.set(qn('w:fmt'), 'decimal')
             sectPr.append(pgNumType)
+            
+        # Uniquement pour la première section, on impose le numéro de départ si > 1
+        if i == 0 and start_page > 1:
+            pgNumType.set(qn('w:start'), str(start_page))
 
         # On traite le footer classique
         for ftr in (sec.first_page_footer, sec.footer, sec.even_page_footer):
@@ -514,7 +518,7 @@ def fill(spec, template, out_path):
             body.append(el)
 
     set_running_header(doc, spec.get("header_citation"))
-    set_page_numbers(doc)
+    set_page_numbers(doc, spec.get("start_page", 1))
     doc.save(out_path)
     print("OK -> " + out_path)
 
