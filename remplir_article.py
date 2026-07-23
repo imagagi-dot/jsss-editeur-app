@@ -388,8 +388,28 @@ def clean_footers_and_set_page_start(doc, start_page=1):
             for child in list(ftr._element):
                 ftr._element.remove(child)
 
-            # Créer un paragraphe vierge pour éviter les erreurs de corruption Word
-            ftr.add_paragraph()
+            # Créer un paragraphe vierge
+            p = ftr.add_paragraph()
+            
+            # Alignement à droite pour le pied de page
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            
+            run = p.add_run()
+            
+            # Champs XML pour générer le numéro de page physique en chiffres arabes
+            el1 = OxmlElement('w:fldChar')
+            el1.set(qn('w:fldCharType'), 'begin')
+            run._r.append(el1)
+            
+            el2 = OxmlElement('w:instrText')
+            el2.set(qn('xml:space'), 'preserve')
+            el2.text = 'PAGE \\* Arabic'
+            run._r.append(el2)
+            
+            el3 = OxmlElement('w:fldChar')
+            el3.set(qn('w:fldCharType'), 'end')
+            run._r.append(el3)
 
 
 def fill_affiliation_box(box_p, aff_lines, corr):
