@@ -308,34 +308,43 @@ def set_running_header(doc, citation, start_page=1):
                 if offset == 0:
                     run = p.add_run()
                     run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
-                    run._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
-                    run._r.append(OxmlElement('w:instrText', text='NUMPAGES', attrib={qn('xml:space'): 'preserve'}))
-                    run._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
+                    el1 = OxmlElement('w:fldChar'); el1.set(qn('w:fldCharType'), 'begin')
+                    run._r.append(el1)
+                    el2 = OxmlElement('w:instrText'); el2.set(qn('xml:space'), 'preserve'); el2.text = 'NUMPAGES'
+                    run._r.append(el2)
+                    el3 = OxmlElement('w:fldChar'); el3.set(qn('w:fldCharType'), 'end')
+                    run._r.append(el3)
                 else:
                     # Formule = offset + NUMPAGES
                     r1 = p.add_run()
                     r1.font.name = "Trebuchet MS"; r1.font.size = Pt(8); r1.font.bold = True; r1.font.italic = True
-                    r1._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
+                    el1 = OxmlElement('w:fldChar'); el1.set(qn('w:fldCharType'), 'begin')
+                    r1._r.append(el1)
                     
                     r2 = p.add_run()
                     r2.font.name = "Trebuchet MS"; r2.font.size = Pt(8); r2.font.bold = True; r2.font.italic = True
-                    r2._r.append(OxmlElement('w:instrText', text=f' = {offset} + ', attrib={qn('xml:space'): 'preserve'}))
+                    el2 = OxmlElement('w:instrText'); el2.set(qn('xml:space'), 'preserve'); el2.text = f' = {offset} + '
+                    r2._r.append(el2)
                     
                     r3 = p.add_run()
                     r3.font.name = "Trebuchet MS"; r3.font.size = Pt(8); r3.font.bold = True; r3.font.italic = True
-                    r3._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
+                    el3 = OxmlElement('w:fldChar'); el3.set(qn('w:fldCharType'), 'begin')
+                    r3._r.append(el3)
                     
                     r4 = p.add_run()
                     r4.font.name = "Trebuchet MS"; r4.font.size = Pt(8); r4.font.bold = True; r4.font.italic = True
-                    r4._r.append(OxmlElement('w:instrText', text='NUMPAGES', attrib={qn('xml:space'): 'preserve'}))
+                    el4 = OxmlElement('w:instrText'); el4.set(qn('xml:space'), 'preserve'); el4.text = 'NUMPAGES'
+                    r4._r.append(el4)
                     
                     r5 = p.add_run()
                     r5.font.name = "Trebuchet MS"; r5.font.size = Pt(8); r5.font.bold = True; r5.font.italic = True
-                    r5._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
+                    el5 = OxmlElement('w:fldChar'); el5.set(qn('w:fldCharType'), 'end')
+                    r5._r.append(el5)
                     
                     r6 = p.add_run()
                     r6.font.name = "Trebuchet MS"; r6.font.size = Pt(8); r6.font.bold = True; r6.font.italic = True
-                    r6._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
+                    el6 = OxmlElement('w:fldChar'); el6.set(qn('w:fldCharType'), 'end')
+                    r6._r.append(el6)
                 
                 if len(parts) > 1:
                     add_fmt_run(parts[1])
