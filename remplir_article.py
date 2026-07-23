@@ -247,7 +247,12 @@ def build_body_elements(spec, doc=None, images_dir=""):
 def set_running_header(doc, citation):
     if not citation:
         return
-    line = citation + "\t\tISSN : 1859-5162"
+        
+    from docx.enum.text import WD_TAB_ALIGNMENT
+    from docx.shared import Cm, Pt
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+
     for sec in doc.sections:
         for hdr in (sec.first_page_header, sec.header, sec.even_page_header):
             if hdr is None:
@@ -256,21 +261,17 @@ def set_running_header(doc, citation):
                 hdr.is_linked_to_previous = False
             except Exception:
                 pass
-            if not hdr.paragraphs:
-                hdr.add_paragraph()
-            p = hdr.paragraphs[0]
-            p.clear()
+                
+            # Nettoyer complètement TOUS les éléments de l'entête
+            for child in list(hdr._element):
+                hdr._element.remove(child)
+
+            p = hdr.add_paragraph()
             
-            # Éliminer le formatage direct "sale" du paragraphe (qui forçait Calibri)
-            from docx.oxml.ns import qn
-            pPr = p._element.pPr
-            if pPr is not None:
-                rPr_in_p = pPr.find(qn('w:rPr'))
-                if rPr_in_p is not None:
-                    pPr.remove(rPr_in_p)
+            # Définir un taquet de tabulation à l'extrême droite pour l'ISSN
+            p.paragraph_format.tab_stops.clear_all()
+            p.paragraph_format.tab_stops.add_tab_stop(Cm(16.5), WD_TAB_ALIGNMENT.RIGHT)
             
-            # Modification du style global de l'entête
-            from docx.shared import Pt
             try:
                 style = doc.styles['Header']
             except KeyError:
@@ -278,29 +279,50 @@ def set_running_header(doc, citation):
                     style = doc.styles['En-tête']
                 except KeyError:
                     style = None
-            
             if style:
-                font = style.font
-                font.name = "Trebuchet MS"
-                font.size = Pt(8)
-                font.bold = True
-                font.italic = True
-            
-            p.style = style
-            
-            parts = line.split('\t')
-            for i, part in enumerate(parts):
-                if part:
-                    run = p.add_run(part)
-                    run.font.name = "Trebuchet MS"
-                    run.font.size = Pt(8)
-                    run.font.bold = True
-                    run.font.italic = True
-                if i < len(parts) - 1:
-                    run_tab = p.add_run()
-                    run_tab.add_tab()
+                p.style = style
 
-def set_page_numbers(doc, start_page=1):
+            # Helper function
+            def add_fmt_run(text):
+                r = p.add_run(text)
+                r.font.name = "Trebuchet MS"
+                r.font.size = Pt(8)
+                r.font.bold = True
+                r.font.italic = True
+                return r
+
+            # Insérer la citation, le numéro de page, et l'ISSN
+            if "[pages]" in citation:
+                parts = citation.split("[pages]")
+                add_fmt_run(parts[0])
+                
+                # Champs XML pour générer le numéro de page en chiffres arabes
+                run = p.add_run()
+                run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
+                fldChar1 = OxmlElement('w:fldChar')
+                fldChar1.set(qn('w:fldCharType'), 'begin')
+                run._r.append(fldChar1)
+                
+                instrText = OxmlElement('w:instrText')
+                instrText.set(qn('xml:space'), 'preserve')
+                instrText.text = 'PAGE \\* Arabic'
+                run._r.append(instrText)
+                
+                fldChar2 = OxmlElement('w:fldChar')
+                fldChar2.set(qn('w:fldCharType'), 'end')
+                run._r.append(fldChar2)
+                
+                if len(parts) > 1:
+                    add_fmt_run(parts[1])
+            else:
+                add_fmt_run(citation)
+                
+            # Ajouter la tabulation et l'ISSN aligné à droite
+            add_fmt_run("\tISSN : 1859-5162")
+
+def clean_footers_and_set_page_start(doc, start_page=1):
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
     for i, sec in enumerate(doc.sections):
         # Forcer la numérotation continue et en chiffres arabes
         sectPr = sec._sectPr
@@ -328,32 +350,12 @@ def set_page_numbers(doc, start_page=1):
             except Exception:
                 pass
             
-            # Nettoyer complètement TOUS les éléments du pied de page (y compris les balises cachées w:sdt)
+            # Nettoyer complètement TOUS les éléments du pied de page
             for child in list(ftr._element):
                 ftr._element.remove(child)
 
-            # Créer un paragraphe vierge
-            p = ftr.add_paragraph()
-            
-            # Alignement à droite
-            from docx.enum.text import WD_ALIGN_PARAGRAPH
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            
-            run = p.add_run()
-            
-            # Champs XML pour générer le numéro de page en chiffres arabes
-            fldChar1 = OxmlElement('w:fldChar')
-            fldChar1.set(qn('w:fldCharType'), 'begin')
-            run._r.append(fldChar1)
-
-            instrText = OxmlElement('w:instrText')
-            instrText.set(qn('xml:space'), 'preserve')
-            instrText.text = 'PAGE \\* Arabic'
-            run._r.append(instrText)
-
-            fldChar2 = OxmlElement('w:fldChar')
-            fldChar2.set(qn('w:fldCharType'), 'end')
-            run._r.append(fldChar2)
+            # Créer un paragraphe vierge pour éviter les erreurs de corruption Word
+            ftr.add_paragraph()
 
 
 def fill_affiliation_box(box_p, aff_lines, corr):
@@ -518,7 +520,7 @@ def fill(spec, template, out_path):
             body.append(el)
 
     set_running_header(doc, spec.get("header_citation"))
-    set_page_numbers(doc, spec.get("start_page", 1))
+    clean_footers_and_set_page_start(doc, spec.get("start_page", 1))
     doc.save(out_path)
     print("OK -> " + out_path)
 
