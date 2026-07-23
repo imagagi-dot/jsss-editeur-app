@@ -143,8 +143,8 @@ def compute_health_score(spec_json):
         
     return checks
 
-st.set_page_config(page_title="JSSS Auto-Éditeur (V4)", page_icon="📝", layout="wide")
-st.title("📝 Éditeur Automatisé - Journal JSSS")
+st.set_page_config(page_title="JSSS Auto-Éditeur (V4)", page_icon="🔬", layout="wide")
+st.title("🔬 Éditeur Scientifique - Journal JSSS")
 st.markdown("Version 4 - Assistants avancés (Traduction, Vancouver, Anonymisation, Pre-flight)")
 
 if 'processed_files' not in st.session_state:
@@ -205,11 +205,17 @@ if st.session_state.processed_files:
     st.markdown("---")
     st.header("3️⃣ Génération des Fichiers (Étape 3)")
     
-    generate_anon = st.checkbox("Générer une version Anonymisée (Peer-Review)", value=False)
+    col_opt1, col_opt2 = st.columns(2)
+    with col_opt1:
+        generate_anon = st.checkbox("Générer une version Anonymisée (Peer-Review)", value=False)
+    with col_opt2:
+        start_page_num = st.number_input("Numéro de la 1ère page", min_value=1, value=1, step=1)
     
     if st.button("🚀 Générer les fichiers Word", type="primary"):
         for filename, final_json in updated_jsons.items():
             try:
+                final_json["start_page"] = start_page_num
+                
                 out_filename = f"JSSS_Formate_{filename}"
                 tmp_path = f"tmp_{out_filename}"
                 remplir_article.fill(final_json, "TEMPLATE_article_JSSS.docx", tmp_path)
