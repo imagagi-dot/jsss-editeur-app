@@ -205,16 +205,29 @@ if st.session_state.processed_files:
     st.markdown("---")
     st.header("3️⃣ Génération des Fichiers (Étape 3)")
     
-    col_opt1, col_opt2 = st.columns(2)
-    with col_opt1:
-        generate_anon = st.checkbox("Générer une version Anonymisée (Peer-Review)", value=False)
-    with col_opt2:
+    st.markdown("**Paramètres de publication :**")
+    col_pub1, col_pub2, col_pub3 = st.columns(3)
+    with col_pub1:
         start_page_num = st.number_input("Numéro de la 1ère page", min_value=1, value=1, step=1)
+    with col_pub2:
+        vol_num = st.number_input("Volume", min_value=1, value=6, step=1)
+    with col_pub3:
+        issue_num = st.number_input("Numéro", min_value=1, value=1, step=1)
+        
+    st.markdown("**Options :**")
+    generate_anon = st.checkbox("Générer une version Anonymisée (Peer-Review)", value=False)
     
     if st.button("🚀 Générer les fichiers Word", type="primary"):
+        import re
         for filename, final_json in updated_jsons.items():
             try:
                 final_json["start_page"] = start_page_num
+                
+                # Mise à jour dynamique du volume et du numéro
+                if "header_citation" in final_json:
+                    cit = final_json["header_citation"]
+                    cit = re.sub(r'vol\s+\d+\s*\(\d+\)', f'vol {vol_num:02d} ({issue_num})', cit, flags=re.IGNORECASE)
+                    final_json["header_citation"] = cit
                 
                 out_filename = f"JSSS_Formate_{filename}"
                 tmp_path = f"tmp_{out_filename}"

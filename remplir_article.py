@@ -244,7 +244,7 @@ def build_body_elements(spec, doc=None, images_dir=""):
     return els
 
 
-def set_running_header(doc, citation):
+def set_running_header(doc, citation, start_page=1):
     if not citation:
         return
         
@@ -253,14 +253,18 @@ def set_running_header(doc, citation):
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
 
-    for sec in doc.sections:
+    for i, sec in enumerate(doc.sections):
         for hdr in (sec.first_page_header, sec.header, sec.even_page_header):
             if hdr is None:
                 continue
-            try:
-                hdr.is_linked_to_previous = False
-            except Exception:
-                pass
+                
+            # Très important : pour propager l'entête sur TOUTES les pages,
+            # on configure uniquement la première section, et on lie les autres !
+            if i > 0:
+                hdr.is_linked_to_previous = True
+                continue
+                
+            hdr.is_linked_to_previous = False
                 
             # Nettoyer complètement TOUS les éléments de l'entête
             for child in list(hdr._element):
@@ -291,26 +295,47 @@ def set_running_header(doc, citation):
                 r.font.italic = True
                 return r
 
-            # Insérer la citation, le numéro de page, et l'ISSN
+            # Insérer la citation, l'intervalle de pages, et l'ISSN
             if "[pages]" in citation:
                 parts = citation.split("[pages]")
                 add_fmt_run(parts[0])
                 
-                # Champs XML pour générer le numéro de page en chiffres arabes
-                run = p.add_run()
-                run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
-                fldChar1 = OxmlElement('w:fldChar')
-                fldChar1.set(qn('w:fldCharType'), 'begin')
-                run._r.append(fldChar1)
+                # On écrit le numéro de la première page (ex: "1-" ou "14-")
+                add_fmt_run(str(start_page) + "-")
                 
-                instrText = OxmlElement('w:instrText')
-                instrText.set(qn('xml:space'), 'preserve')
-                instrText.text = 'PAGE \\* Arabic'
-                run._r.append(instrText)
-                
-                fldChar2 = OxmlElement('w:fldChar')
-                fldChar2.set(qn('w:fldCharType'), 'end')
-                run._r.append(fldChar2)
+                # Pour la page de fin, on utilise NUMPAGES
+                offset = start_page - 1
+                if offset == 0:
+                    run = p.add_run()
+                    run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
+                    run._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
+                    run._r.append(OxmlElement('w:instrText', text='NUMPAGES', attrib={qn('xml:space'): 'preserve'}))
+                    run._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
+                else:
+                    # Formule = offset + NUMPAGES
+                    r1 = p.add_run()
+                    r1.font.name = "Trebuchet MS"; r1.font.size = Pt(8); r1.font.bold = True; r1.font.italic = True
+                    r1._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
+                    
+                    r2 = p.add_run()
+                    r2.font.name = "Trebuchet MS"; r2.font.size = Pt(8); r2.font.bold = True; r2.font.italic = True
+                    r2._r.append(OxmlElement('w:instrText', text=f' = {offset} + ', attrib={qn('xml:space'): 'preserve'}))
+                    
+                    r3 = p.add_run()
+                    r3.font.name = "Trebuchet MS"; r3.font.size = Pt(8); r3.font.bold = True; r3.font.italic = True
+                    r3._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'begin'}))
+                    
+                    r4 = p.add_run()
+                    r4.font.name = "Trebuchet MS"; r4.font.size = Pt(8); r4.font.bold = True; r4.font.italic = True
+                    r4._r.append(OxmlElement('w:instrText', text='NUMPAGES', attrib={qn('xml:space'): 'preserve'}))
+                    
+                    r5 = p.add_run()
+                    r5.font.name = "Trebuchet MS"; r5.font.size = Pt(8); r5.font.bold = True; r5.font.italic = True
+                    r5._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
+                    
+                    r6 = p.add_run()
+                    r6.font.name = "Trebuchet MS"; r6.font.size = Pt(8); r6.font.bold = True; r6.font.italic = True
+                    r6._r.append(OxmlElement('w:fldChar', attrib={qn('w:fldCharType'): 'end'}))
                 
                 if len(parts) > 1:
                     add_fmt_run(parts[1])
@@ -519,7 +544,7 @@ def fill(spec, template, out_path):
         else:
             body.append(el)
 
-    set_running_header(doc, spec.get("header_citation"))
+    set_running_header(doc, spec.get("header_citation"), spec.get("start_page", 1))
     clean_footers_and_set_page_start(doc, spec.get("start_page", 1))
     doc.save(out_path)
     print("OK -> " + out_path)
