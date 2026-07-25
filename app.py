@@ -152,8 +152,16 @@ def compute_health_score(spec_json):
     return checks
 
 st.set_page_config(page_title="JSSS Auto-Éditeur (V4)", page_icon="🔬", layout="wide")
-st.title("🔬 Éditeur Scientifique - Journal JSSS")
-st.markdown("Version 4 - Assistants avancés (Traduction, Vancouver, Anonymisation, Pre-flight)")
+
+col_head1, col_head2 = st.columns([0.8, 0.2])
+with col_head1:
+    st.title("🔬 Éditeur Scientifique - Journal JSSS")
+    st.markdown("Version 4 - Assistants avancés (Traduction, Vancouver, Anonymisation, Pre-flight)")
+with col_head2:
+    st.write("") # Espacement pour aligner
+    if st.button("🔄 Rafraîchir l'application", type="secondary", use_container_width=True):
+        st.session_state.clear()
+        st.rerun()
 
 if 'processed_files' not in st.session_state:
     st.session_state.processed_files = {}
