@@ -99,7 +99,7 @@ Texte brut du manuscrit à traiter avec placeholders :
 """
     
     response = client.models.generate_content(
-        model='gemini-1.5-pro',
+        model='gemini-3.1-pro',
         contents=prompt
     )
     
