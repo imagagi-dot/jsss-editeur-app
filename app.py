@@ -98,10 +98,18 @@ Texte brut du manuscrit à traiter avec placeholders :
 {text}
 """
     
-    response = client.models.generate_content(
-        model='gemini-3.1-pro',
-        contents=prompt
-    )
+    try:
+        response = client.models.generate_content(
+            model='gemini-3.6-flash',
+            contents=prompt
+        )
+    except Exception as e:
+        try:
+            # En cas d'échec, on liste les modèles disponibles pour diagnostiquer
+            models = [m.name for m in client.models.list()]
+            raise Exception(f"Le modèle demandé n'est pas accessible. Modèles disponibles pour cette clé : {', '.join(models)}. Erreur d'origine: {str(e)}")
+        except Exception:
+            raise e
     
     out_text = response.text.strip()
     if out_text.startswith("```json"): out_text = out_text[7:]
