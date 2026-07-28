@@ -274,7 +274,7 @@ def set_running_header(doc, citation, start_page=1):
             
             # Définir un taquet de tabulation à l'extrême droite pour l'ISSN
             p.paragraph_format.tab_stops.clear_all()
-            p.paragraph_format.tab_stops.add_tab_stop(Cm(16.5), WD_TAB_ALIGNMENT.RIGHT)
+            p.paragraph_format.tab_stops.add_tab_stop(Cm(15.7), WD_TAB_ALIGNMENT.RIGHT)
             
             try:
                 style = doc.styles['Header']
