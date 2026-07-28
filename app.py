@@ -80,7 +80,7 @@ def process_manuscript(text, api_key):
 
     prompt = f"""Tu es un éditeur scientifique et médical expert, spécialisé dans la préparation de manuscrits pour le "Journal Sahélien des Sciences de la Santé (JSSS)".
 
-Tâche : Transforme et corrige le texte brut fourni pour qu'il soit conforme, puis génère STRICTEMENT un objet JSON (pas de markdown autour).
+Tâche : Formate le texte brut fourni en JSON tout en CONSERVANT STRICTEMENT l'intégralité du texte original. Ne résume pas, ne coupe pas et ne reformule pas les phrases. Les seules corrections autorisées sont l'orthographe et la ponctuation. Le texte final doit être de la même longueur et conserver exactement le même contenu que le manuscrit soumis. Génère STRICTEMENT un objet JSON (pas de markdown autour).
 
 L'objet JSON doit avoir EXACTEMENT la même structure que l'exemple suivant :
 {gabarit}
@@ -90,9 +90,9 @@ Directives de traitement CRITIQUES :
 2. 'authors' & 'affiliations' : Extrais les auteurs et relie-les à leurs affiliations via des numéros en EXPOSANT encadrés par des accents circonflexes (ex: Nom Prénom^1,2^*). L'auteur correspondant prend un astérisque en plus.
 3. TRADUCTION BILINGUE : Si le résumé français est présent mais pas l'anglais, tu DOIS générer 'abstract' et 'keywords_en' avec une traduction scientifique et médicale anglaise parfaite.
 4. BIBLIOGRAPHIE (references) : Tu DOIS reformater CHAQUE référence bibliographique à la toute fin du document selon la NORME DE VANCOUVER stricte. Corrige les fautes, abréviations, année, etc.
-5. 'body' : Le texte principal. Utilise 'type': 'h2' pour les grands titres, 'type': 'h3' pour les sous-titres, et 'type': 'p' pour les paragraphes.
-6. TABLEAUX : Remplace [TABLE_PLACEHOLDER_START] par {{"type": "table", "data": [["colonne1", "colonne2"], ["valeur1", "valeur2"]]}}
-7. IMAGES : Remplace [IMAGE_PLACEHOLDER: nom_du_fichier.png] par {{"type": "figure", "image": "nom_du_fichier.png"}} avec le titre de l'image (s'il y en a un juste en dessous) dans la balise "caption".
+5. 'body' : Le texte principal. INTERDICTION ABSOLUE de résumer, raccourcir ou réécrire le contenu. Retranscris l'intégralité des paragraphes à l'identique. Utilise 'type': 'h2' pour les grands titres, 'type': 'h3' pour les sous-titres, et 'type': 'p' pour les paragraphes. Tu DOIS ABSOLUMENT inclure TOUS les [TABLE_PLACEHOLDER_START] et [IMAGE_PLACEHOLDER] présents dans le texte brut, exactement à leur emplacement d'origine. Il est strictement interdit d'en omettre un seul.
+6. TABLEAUX : Transforme chaque bloc [TABLE_PLACEHOLDER_START]...[TABLE_PLACEHOLDER_END] en un objet {{"type": "table", "data": [["col1", "col2"], ["val1", "val2"]]}} dans le 'body'.
+7. IMAGES : Transforme chaque [IMAGE_PLACEHOLDER: nom_du_fichier.png] en un objet {{"type": "figure", "image": "nom_du_fichier.png"}} dans le 'body', avec le titre de l'image (s'il y en a un juste en dessous) dans la clé "caption".
 
 Texte brut du manuscrit à traiter avec placeholders :
 {text}
