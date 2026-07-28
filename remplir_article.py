@@ -273,8 +273,7 @@ def set_running_header(doc, citation, start_page=1):
             p = hdr.add_paragraph()
             
             # Définir un taquet de tabulation à l'extrême droite pour l'ISSN
-            p.paragraph_format.tab_stops.clear_all()
-            p.paragraph_format.tab_stops.add_tab_stop(Cm(15.7), WD_TAB_ALIGNMENT.RIGHT)
+            # Plus de gestion manuelle des taquets de tabulation ici pour éviter les bugs Word
             
             try:
                 style = doc.styles['Header']
@@ -351,9 +350,8 @@ def set_running_header(doc, citation, start_page=1):
             else:
                 add_fmt_run(citation)
                 
-            # Ajouter la tabulation correctement en XML puis le texte
-            r_tab = p.add_run()
-            r_tab.add_tab()
+            # Remplacer la tabulation (qui bugue après un champ dynamique) par un espacement dur
+            r_tab = p.add_run("          -          ")
             r_tab.font.name = "Trebuchet MS"
             r_tab.font.size = Pt(8)
             r_tab.font.bold = True
