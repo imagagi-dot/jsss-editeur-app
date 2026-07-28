@@ -116,7 +116,56 @@ Texte brut du manuscrit à traiter avec placeholders :
     if out_text.startswith("```"): out_text = out_text[3:]
     if out_text.endswith("```"): out_text = out_text[:-3]
         
-    return json.loads(out_text.strip())
+    parsed_json = json.loads(out_text.strip())
+    
+    # --- SECURITE ANTI-OUBLI ---
+    # Récupération forcée des images
+    original_images = re.findall(r'\[IMAGE_PLACEHOLDER:\s*(.*?)\]', text)
+    json_body = parsed_json.get("body", [])
+    
+    # Nettoyer si l'IA a laissé le placeholder en texte au lieu d'en faire un objet
+    cleaned_body = []
+    for block in json_body:
+        if block.get("type") == "p" and "text" in block and "[IMAGE_PLACEHOLDER:" in block["text"]:
+            imgs = re.findall(r'\[IMAGE_PLACEHOLDER:\s*(.*?)\]', block["text"])
+            for img in imgs:
+                cleaned_body.append({"type": "figure", "image": img.strip(), "caption": "⚠️ FIGURE MAL FORMATÉE PAR L'IA"})
+            block["text"] = re.sub(r'\[IMAGE_PLACEHOLDER:\s*.*?\]', '', block["text"]).strip()
+            if block["text"]: cleaned_body.append(block)
+        else:
+            cleaned_body.append(block)
+    
+    json_body = cleaned_body
+    
+    # Trouver les images déjà présentes dans le JSON
+    json_images = [b.get("image") for b in json_body if b.get("type") == "figure" and "image" in b]
+    for img in original_images:
+        if img.strip() not in json_images:
+            json_body.append({
+                "type": "figure",
+                "image": img.strip(),
+                "caption": "⚠️ FIGURE OUBLIÉE RÉCUPÉRÉE AUTOMATIQUEMENT"
+            })
+            
+    # Récupération forcée des tableaux
+    original_tables = re.findall(r'\[TABLE_PLACEHOLDER_START\](.*?)\[TABLE_PLACEHOLDER_END\]', text, re.DOTALL)
+    json_tables_count = sum(1 for b in json_body if b.get("type") == "table")
+    
+    if json_tables_count < len(original_tables):
+        for i in range(json_tables_count, len(original_tables)):
+            md_table = original_tables[i].strip()
+            data = []
+            for line in md_table.split('\n'):
+                line = line.strip()
+                if line.startswith('|') and '---' not in line:
+                    cols = [c.strip() for c in line.strip('|').split('|')]
+                    if any(cols): data.append(cols)
+            if data:
+                json_body.append({"type": "table", "data": data})
+                json_body.append({"type": "p", "text": "⚠️ TABLEAU OUBLIÉ RÉCUPÉRÉ AUTOMATIQUEMENT (Titre manquant)"})
+                
+    parsed_json["body"] = json_body
+    return parsed_json
 
 def compute_health_score(spec_json):
     checks = []

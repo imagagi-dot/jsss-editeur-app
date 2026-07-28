@@ -351,8 +351,19 @@ def set_running_header(doc, citation, start_page=1):
             else:
                 add_fmt_run(citation)
                 
-            # Ajouter la tabulation et l'ISSN aligné à droite
-            add_fmt_run("\tISSN : 1859-5162")
+            # Ajouter la tabulation correctement en XML puis le texte
+            r_tab = p.add_run()
+            r_tab.add_tab()
+            r_tab.font.name = "Trebuchet MS"
+            r_tab.font.size = Pt(8)
+            r_tab.font.bold = True
+            r_tab.font.italic = True
+            
+            r_issn = p.add_run("ISSN : 1859-5162")
+            r_issn.font.name = "Trebuchet MS"
+            r_issn.font.size = Pt(8)
+            r_issn.font.bold = True
+            r_issn.font.italic = True
 
 def clean_footers_and_set_page_start(doc, start_page=1):
     from docx.oxml.ns import qn
