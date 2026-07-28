@@ -272,8 +272,10 @@ def set_running_header(doc, citation, start_page=1):
 
             p = hdr.add_paragraph()
             
-            # Définir un taquet de tabulation à l'extrême droite pour l'ISSN
-            # Plus de gestion manuelle des taquets de tabulation ici pour éviter les bugs Word
+            # Définir un taquet de tabulation à l'extrême droite pour l'ISSN (15.7 cm)
+            from docx.enum.text import WD_TAB_ALIGNMENT
+            p.paragraph_format.tab_stops.clear_all()
+            p.paragraph_format.tab_stops.add_tab_stop(Cm(15.7), WD_TAB_ALIGNMENT.RIGHT)
             
             try:
                 style = doc.styles['Header']
@@ -307,51 +309,36 @@ def set_running_header(doc, citation, start_page=1):
                 if offset == 0:
                     run = p.add_run()
                     run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
-                    el1 = OxmlElement('w:fldChar'); el1.set(qn('w:fldCharType'), 'begin')
-                    run._r.append(el1)
-                    el2 = OxmlElement('w:instrText'); el2.set(qn('xml:space'), 'preserve'); el2.text = 'NUMPAGES'
-                    run._r.append(el2)
-                    el3 = OxmlElement('w:fldChar'); el3.set(qn('w:fldCharType'), 'end')
-                    run._r.append(el3)
+                    el_b = OxmlElement('w:fldChar'); el_b.set(qn('w:fldCharType'), 'begin')
+                    el_i = OxmlElement('w:instrText'); el_i.set(qn('xml:space'), 'preserve'); el_i.text = 'NUMPAGES'
+                    el_s = OxmlElement('w:fldChar'); el_s.set(qn('w:fldCharType'), 'separate')
+                    el_t = OxmlElement('w:t'); el_t.text = '5'
+                    el_e = OxmlElement('w:fldChar'); el_e.set(qn('w:fldCharType'), 'end')
+                    for el in [el_b, el_i, el_s, el_t, el_e]: run._r.append(el)
                 else:
-                    # Formule = offset + NUMPAGES
-                    r1 = p.add_run()
-                    r1.font.name = "Trebuchet MS"; r1.font.size = Pt(8); r1.font.bold = True; r1.font.italic = True
-                    el1 = OxmlElement('w:fldChar'); el1.set(qn('w:fldCharType'), 'begin')
-                    r1._r.append(el1)
-                    
-                    r2 = p.add_run()
-                    r2.font.name = "Trebuchet MS"; r2.font.size = Pt(8); r2.font.bold = True; r2.font.italic = True
-                    el2 = OxmlElement('w:instrText'); el2.set(qn('xml:space'), 'preserve'); el2.text = f' = {offset} + '
-                    r2._r.append(el2)
-                    
-                    r3 = p.add_run()
-                    r3.font.name = "Trebuchet MS"; r3.font.size = Pt(8); r3.font.bold = True; r3.font.italic = True
-                    el3 = OxmlElement('w:fldChar'); el3.set(qn('w:fldCharType'), 'begin')
-                    r3._r.append(el3)
-                    
-                    r4 = p.add_run()
-                    r4.font.name = "Trebuchet MS"; r4.font.size = Pt(8); r4.font.bold = True; r4.font.italic = True
-                    el4 = OxmlElement('w:instrText'); el4.set(qn('xml:space'), 'preserve'); el4.text = 'NUMPAGES'
-                    r4._r.append(el4)
-                    
-                    r5 = p.add_run()
-                    r5.font.name = "Trebuchet MS"; r5.font.size = Pt(8); r5.font.bold = True; r5.font.italic = True
-                    el5 = OxmlElement('w:fldChar'); el5.set(qn('w:fldCharType'), 'end')
-                    r5._r.append(el5)
-                    
-                    r6 = p.add_run()
-                    r6.font.name = "Trebuchet MS"; r6.font.size = Pt(8); r6.font.bold = True; r6.font.italic = True
-                    el6 = OxmlElement('w:fldChar'); el6.set(qn('w:fldCharType'), 'end')
-                    r6._r.append(el6)
+                    run = p.add_run()
+                    run.font.name = "Trebuchet MS"; run.font.size = Pt(8); run.font.bold = True; run.font.italic = True
+                    el_b1 = OxmlElement('w:fldChar'); el_b1.set(qn('w:fldCharType'), 'begin')
+                    el_i1 = OxmlElement('w:instrText'); el_i1.set(qn('xml:space'), 'preserve'); el_i1.text = f' = {offset} + '
+                    el_b2 = OxmlElement('w:fldChar'); el_b2.set(qn('w:fldCharType'), 'begin')
+                    el_i2 = OxmlElement('w:instrText'); el_i2.set(qn('xml:space'), 'preserve'); el_i2.text = 'NUMPAGES'
+                    el_s2 = OxmlElement('w:fldChar'); el_s2.set(qn('w:fldCharType'), 'separate')
+                    el_t2 = OxmlElement('w:t'); el_t2.text = '5'
+                    el_e2 = OxmlElement('w:fldChar'); el_e2.set(qn('w:fldCharType'), 'end')
+                    el_s1 = OxmlElement('w:fldChar'); el_s1.set(qn('w:fldCharType'), 'separate')
+                    el_t1 = OxmlElement('w:t'); el_t1.text = str(offset + 5)
+                    el_e1 = OxmlElement('w:fldChar'); el_e1.set(qn('w:fldCharType'), 'end')
+                    for el in [el_b1, el_i1, el_b2, el_i2, el_s2, el_t2, el_e2, el_s1, el_t1, el_e1]:
+                        run._r.append(el)
                 
                 if len(parts) > 1:
                     add_fmt_run(parts[1])
             else:
                 add_fmt_run(citation)
                 
-            # Remplacer la tabulation (qui bugue après un champ dynamique) par un espacement dur
-            r_tab = p.add_run("          -          ")
+            # Réinsertion de la véritable tabulation XML
+            r_tab = p.add_run()
+            r_tab.add_tab()
             r_tab.font.name = "Trebuchet MS"
             r_tab.font.size = Pt(8)
             r_tab.font.bold = True
