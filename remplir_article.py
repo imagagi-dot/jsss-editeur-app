@@ -270,12 +270,25 @@ def set_running_header(doc, citation, start_page=1):
             for child in list(hdr._element):
                 hdr._element.remove(child)
 
-            p = hdr.add_paragraph()
+            # Création d'un tableau 1x2 pour l'alignement parfait gauche/droite
+            table = hdr.add_table(rows=1, cols=2, width=Cm(15.7))
             
-            # Définir un taquet de tabulation à l'extrême droite pour l'ISSN (15.7 cm)
-            from docx.enum.text import WD_TAB_ALIGNMENT
-            p.paragraph_format.tab_stops.clear_all()
-            p.paragraph_format.tab_stops.add_tab_stop(Cm(15.7), WD_TAB_ALIGNMENT.RIGHT)
+            # Suppression manuelle des bordures du tableau en XML
+            from docx.oxml import parse_xml
+            borders_xml = '''
+            <w:tblBorders xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+                <w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+                <w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+                <w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+                <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+                <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+            </w:tblBorders>
+            '''
+            table._tbl.tblPr.append(parse_xml(borders_xml))
+
+            # Cellule de gauche pour la citation
+            p = table.cell(0, 0).paragraphs[0]
             
             try:
                 style = doc.styles['Header']
@@ -336,15 +349,12 @@ def set_running_header(doc, citation, start_page=1):
             else:
                 add_fmt_run(citation)
                 
-            # Réinsertion de la véritable tabulation XML
-            r_tab = p.add_run()
-            r_tab.add_tab()
-            r_tab.font.name = "Trebuchet MS"
-            r_tab.font.size = Pt(8)
-            r_tab.font.bold = True
-            r_tab.font.italic = True
+            # Cellule de droite pour l'ISSN
+            p_right = table.cell(0, 1).paragraphs[0]
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            p_right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             
-            r_issn = p.add_run("ISSN : 1859-5162")
+            r_issn = p_right.add_run("ISSN : 1859-5162")
             r_issn.font.name = "Trebuchet MS"
             r_issn.font.size = Pt(8)
             r_issn.font.bold = True
