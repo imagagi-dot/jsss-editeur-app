@@ -227,12 +227,12 @@ def build_body_elements(spec, doc=None, images_dir=""):
             if blk.get("caption"):
                 els.append(_new_para(blk["caption"], SZ["caption"], bold=True))
         elif t == "table":
+            if blk.get("caption"):
+                els.append(_new_para(blk["caption"], SZ["caption"], bold=True))
             if doc is not None and "data" in blk:
                 tbl_el = _table_element(doc, blk["data"])
                 if tbl_el is not None:
                     els.append(tbl_el)
-            if blk.get("caption"):
-                els.append(_new_para(blk["caption"], SZ["caption"], bold=True))
         else:
             els.append(_new_para(txt, SZ["body"]))
     conflict = spec.get("conflict", "Les auteurs ne declarent aucun conflit d'interets.")

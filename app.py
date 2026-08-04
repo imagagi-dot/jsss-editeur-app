@@ -27,10 +27,30 @@ def iter_block_items(parent):
         elif isinstance(child, CT_Tbl):
             yield Table(child, parent)
 
+def extract_drawings_from_runs(runs, doc, temp_dir, NS, img_count):
+    extracted_placeholders = []
+    for run in runs:
+        drawing_elements = run._element.findall('.//w:drawing', NS)
+        for drawing in drawing_elements:
+            blips = drawing.findall('.//a:blip', NS)
+            for blip in blips:
+                rId = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                if rId and rId in doc.part.related_parts:
+                    image_part = doc.part.related_parts[rId]
+                    img_ext = image_part.content_type.split('/')[-1]
+                    if img_ext == 'jpeg': img_ext = 'jpg'
+                    img_name = f"image_{img_count[0]}.{img_ext}"
+                    img_path = os.path.join(temp_dir, img_name)
+                    with open(img_path, "wb") as f:
+                        f.write(image_part.blob)
+                    extracted_placeholders.append(f"\n[IMAGE_PLACEHOLDER: {img_name}]\n")
+                    img_count[0] += 1
+    return extracted_placeholders
+
 def extract_content_and_images(uploaded_file, temp_dir):
     doc = Document(uploaded_file)
     content = []
-    img_count = 0
+    img_count = [0]
     
     NS = {
         'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
@@ -41,34 +61,30 @@ def extract_content_and_images(uploaded_file, temp_dir):
     
     for block in iter_block_items(doc):
         if isinstance(block, Paragraph):
+            imgs = extract_drawings_from_runs(block.runs, doc, temp_dir, NS, img_count)
+            content.extend(imgs)
             text = block.text.strip()
-            for run in block.runs:
-                drawing_elements = run._element.findall('.//w:drawing', NS)
-                for drawing in drawing_elements:
-                    blips = drawing.findall('.//a:blip', NS)
-                    for blip in blips:
-                        rId = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
-                        if rId:
-                            image_part = doc.part.related_parts[rId]
-                            img_ext = image_part.content_type.split('/')[-1]
-                            if img_ext == 'jpeg': img_ext = 'jpg'
-                            img_name = f"image_{img_count}.{img_ext}"
-                            img_path = os.path.join(temp_dir, img_name)
-                            with open(img_path, "wb") as f:
-                                f.write(image_part.blob)
-                            content.append(f"\n[IMAGE_PLACEHOLDER: {img_name}]\n")
-                            img_count += 1
             if text:
                 content.append(text)
                 
         elif isinstance(block, Table):
             table_md = []
+            has_table_text = False
             for i, row in enumerate(block.rows):
-                row_data = [cell.text.replace('\\n', ' ').strip() for cell in row.cells]
+                row_data = []
+                for cell in row.cells:
+                    for p in cell.paragraphs:
+                        imgs = extract_drawings_from_runs(p.runs, doc, temp_dir, NS, img_count)
+                        content.extend(imgs)
+                    c_text = cell.text.replace('\n', ' ').strip()
+                    if c_text:
+                        has_table_text = True
+                    row_data.append(c_text)
                 table_md.append("| " + " | ".join(row_data) + " |")
                 if i == 0:
                     table_md.append("|" + "|".join(["---"] * len(row.cells)) + "|")
-            content.append("\n[TABLE_PLACEHOLDER_START]\n" + "\n".join(table_md) + "\n[TABLE_PLACEHOLDER_END]\n")
+            if has_table_text:
+                content.append("\n[TABLE_PLACEHOLDER_START]\n" + "\n".join(table_md) + "\n[TABLE_PLACEHOLDER_END]\n")
             
     return "\n".join(content)
 
@@ -78,30 +94,52 @@ def process_manuscript(text, api_key):
     with open("GABARIT_article.json", "r", encoding="utf-8") as f:
         gabarit = f.read()
 
-    prompt = f"""Tu es un éditeur scientifique et médical expert, spécialisé dans la préparation de manuscrits pour le "Journal Sahélien des Sciences de la Santé (JSSS)".
+    prompt = f"""Tu es un éditeur scientifique et médical expert, spécialisé dans la préparation et la structuration de manuscrits pour le "Journal Sahélien des Sciences de la Santé (JSSS)".
 
-Tâche : Formate le texte brut fourni en JSON tout en CONSERVANT STRICTEMENT l'intégralité du texte original. Ne résume pas, ne coupe pas et ne reformule pas les phrases. Les seules corrections autorisées sont l'orthographe et la ponctuation. Le texte final doit être de la même longueur et conserver exactement le même contenu que le manuscrit soumis. Génère STRICTEMENT un objet JSON (pas de markdown autour).
+RÈGLE D'OR ABSOLUE : Tu es un FORMATEUR DE TEXTE, PAS UN RÉDACTEUR NI UN RÉSUMEUR.
+LE TEXTE ORIGINAL SOUMIS DOIT SORTIR À 100% INTÉGRAL, SANS AUCUNE COUPE, SANS AUCUN RÉSUMÉ, SANS REFORMULATION.
 
-L'objet JSON doit avoir EXACTEMENT la même structure que l'exemple suivant :
+Tâche : Structure l'intégralité du texte brut fourni en un objet JSON valide (sans markdown ```json autour).
+
+Structure JSON type requise :
 {gabarit}
 
-Directives de traitement CRITIQUES :
-1. 'header_citation' : Nom du premier auteur (ex: Harouna Amadou ML.) suivi de 'et al. J Sah Sci Santé (2026), vol 06 (1): [pages]'.
-2. 'authors' & 'affiliations' : Extrais les auteurs et relie-les à leurs affiliations via des numéros en EXPOSANT encadrés par des accents circonflexes (ex: Nom Prénom^1,2^*). L'auteur correspondant prend un astérisque en plus.
-3. TRADUCTION BILINGUE : Si le résumé français est présent mais pas l'anglais, tu DOIS générer 'abstract' et 'keywords_en' avec une traduction scientifique et médicale anglaise parfaite.
-4. BIBLIOGRAPHIE (references) : Tu DOIS reformater CHAQUE référence bibliographique à la toute fin du document selon la NORME DE VANCOUVER stricte. Corrige les fautes, abréviations, année, etc.
-5. 'body' : Le texte principal. INTERDICTION ABSOLUE de résumer, raccourcir ou réécrire le contenu. Retranscris l'intégralité des paragraphes à l'identique. Utilise 'type': 'h2' pour les grands titres, 'type': 'h3' pour les sous-titres, et 'type': 'p' pour les paragraphes. Tu DOIS ABSOLUMENT inclure TOUS les [TABLE_PLACEHOLDER_START] et [IMAGE_PLACEHOLDER] présents dans le texte brut, exactement à leur emplacement d'origine. Il est strictement interdit d'en omettre un seul.
-6. TABLEAUX : Transforme chaque bloc [TABLE_PLACEHOLDER_START]...[TABLE_PLACEHOLDER_END] en un objet {{"type": "table", "data": [["col1", "col2"], ["val1", "val2"]]}} dans le 'body'.
-7. IMAGES : Transforme chaque [IMAGE_PLACEHOLDER: nom_du_fichier.png] en un objet {{"type": "figure", "image": "nom_du_fichier.png"}} dans le 'body', avec le titre de l'image (s'il y en a un juste en dessous) dans la clé "caption".
+Directives STRICTES ET NON NÉGOCIABLES :
+1. 'header_citation' : Nom du premier auteur (ex: Nom Initiale.) suivi de 'et al. J Sah Sci Santé (2026), vol 06 (1): [pages]'.
+2. 'authors' & 'affiliations' :
+   - Extrais fidèlement toutes les affiliations (1, 2, 3, 4, 5, etc.) dans 'affiliations' sans décalage.
+   - Relie chaque auteur à ses numéros d'affiliation exacts avec des exposants : ex: "Nom P^1,2^*" (astérisque pour l'auteur correspondant).
+3. RÉSUMÉ & ABSTRACT ('resume' et 'abstract') :
+   - DANS 'resume' : Découpe le résumé français en 4 sections : "Introduction", "Matériels et méthodes", "Résultats", "Conclusion". TU DOIS RECOPIER L'INTÉGRALITÉ ABSOLUE DU TEXTE DE CHAQUE SECTION SANS ENLEVER UNE SEULE PHRASE. IL EST STRICTEMENT INTERDIT DE RÉSUMER L'INTRODUCTION OU LES RÉSULTATS DU RÉSUMÉ.
+   - DANS 'abstract' : Si le résumé en anglais (Summary ou Abstract) est présent dans le texte original, RECOPIE-LE INTÉGRALEMENT mot pour mot avec ses 4 sections. Ne le résume jamais. S'il n'existe pas dans le texte original, traduis fidèlement le résumé français complet en anglais médical.
+4. CORPS DU MANUSCRIT ('body') :
+   - COPIE L'INTÉGRALITÉ ABSOLUE DU MANUSCRIT. CHAQUE PARAGRAPHE, CHAQUE PHRASE, CHAQUE TERME DOIT ÊTRE PRÉSENT.
+   - Titres principaux (Introduction, Matériel et Méthodes, Résultats, Discussion, Conclusion) -> {{"type": "h2", "text": "..."}}
+   - Sous-titres -> {{"type": "h3", "text": "..."}}
+   - Paragraphes de texte -> {{"type": "p", "text": "..."}}
+5. FIGURES & SOUS-LÉGENDES DÉTAILLÉES :
+   - Chaque [IMAGE_PLACEHOLDER: nom_du_fichier.png] DOIT être converti en {{"type": "figure", "image": "nom_du_fichier.png", "caption": "..."}}.
+   - ATTENTION AUX LÉGENDES ET SOUS-LÉGENDES : Si une figure comporte des explications détaillées ou des sous-descriptions (ex: "Figure 2: Pièces chirurgicales", "A-Pancréatectomie caudale : ...", "B-Spléno-pancréatectomie : ..."), TU DOIS IMPÉRATIVEMENT TOUT CONSERVER en plaçant la légende complète dans "caption" ou en insérant des paragraphes {{"type": "p", "text": "..."}} immédiatement sous la figure. IL EST STRICTEMENT INTERDIT D'OUBLIER UNE LÉGENDE.
+6. TABLEAUX :
+   - Transforme chaque bloc [TABLE_PLACEHOLDER_START]...[TABLE_PLACEHOLDER_END] en {{"type": "table", "data": [[...], [...]]}}.
+   - Si le tableau possède un titre au-dessus (ex: "Tableau N° 1 : ..."), place-le dans un bloc {{"type": "caption", "text": "Tableau N° 1 : ..."}} juste AVANT l'objet table.
+   - Conserve toutes les lignes et colonnes du tableau à 100%.
+7. BIBLIOGRAPHIE ('references') :
+   - Reformate chaque référence selon la norme de Vancouver stricte (Auteurs. Titre. Revue abrégée. Année;volume(numéro):pages). Ne supprime aucune référence.
+8. 'corresponding' & 'conflict' :
+   - Extrais les coordonnées complètes de l'auteur correspondant.
 
-Texte brut du manuscrit à traiter avec placeholders :
+Texte brut du manuscrit soumis :
 {text}
 """
     
     try:
         response = client.models.generate_content(
             model='gemini-3.6-flash',
-            contents=prompt
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                temperature=0.0
+            )
         )
     except Exception as e:
         try:
