@@ -271,7 +271,12 @@ def set_running_header(doc, citation, start_page=1):
                 hdr._element.remove(child)
 
             # Création d'un tableau 1x2 pour l'alignement parfait gauche/droite
-            table = hdr.add_table(rows=1, cols=2, width=Cm(15.7))
+            table = hdr.add_table(rows=1, cols=2, width=Cm(15.75))
+            table.autofit = False
+            table.columns[0].width = Cm(12.2)
+            table.columns[1].width = Cm(3.55)
+            table.cell(0, 0).width = Cm(12.2)
+            table.cell(0, 1).width = Cm(3.55)
             
             # Suppression manuelle des bordures du tableau en XML
             from docx.oxml import parse_xml
